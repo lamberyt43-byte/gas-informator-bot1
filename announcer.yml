@@ -1,0 +1,29 @@
+name: Announcer bot
+
+on:
+  schedule:
+    # каждые 10 минут (время в UTC; GitHub может немного задерживать
+    # запуск в часы пиковой нагрузки — для информационного бота это некритично)
+    - cron: '*/10 * * * *'
+  workflow_dispatch: {}   # позволяет запустить вручную кнопкой "Run workflow"
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install firebase-admin requests
+
+      - name: Run announcer bot
+        run: python announcer_bot.py
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHANNEL_ID: ${{ secrets.CHANNEL_ID }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
