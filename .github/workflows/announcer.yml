@@ -2,7 +2,8 @@ name: Announcer bot
 
 on:
   schedule:
-    - cron: '*/1. * * * *'
+    # GitHub Actions будет запускать этот workflow каждые 5 минут
+    - cron: '*/5 * * * *'
   workflow_dispatch: {}
 
 jobs:
@@ -18,9 +19,27 @@ jobs:
       - name: Install dependencies
         run: pip install firebase-admin requests
 
-      - name: Run announcer bot
-        run: python announcer_bot.py
+      - name: Run announcer bot loop
+        # Передаем количество повторений и задержку через переменные окружения
         env:
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          RUN_COUNT: 5
+          INTERVAL_SEC: 60
+        # Запускаем Python-обертку, которая выполнит ваш бот 5 раз с интервалом в 1 минуту
+        run: |
+          python -c "
+          import os, time, subprocess
+          run_count = int(os.getenv('RUN_COUNT', 5))
+          interval = int(os.getenv('INTERVAL_SEC', 60))
+          
+          for i in range(run_count):
+              print(f'---> Итерация {i+1} из {run_count}...')
+              # Запуск вашего основного скрипта бота
+              subprocess.run(['python', 'announcer_bot.py'])
+              
+              # Не спим после последней итерации, так как workflow все равно завершится
+              if i < run_count - 1:
+                  time.sleep(interval)
+          "
